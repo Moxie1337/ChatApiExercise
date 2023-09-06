@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import List
-from openai.error import InvalidRequestError
+from openai.error import RateLimitError
 from collections import OrderedDict
 import json
 import time
@@ -29,11 +29,14 @@ if __name__ == "__main__":
         for i in range(3):
             try:
                 chat_handle.create_chat()
-            except InvalidRequestError:
+            except RateLimitError:
                 time.sleep(10)
                 chat_handle.create_chat()
             message_container.append(chat_handle.get_chat_info())
 
+        if idx % 50 == 0:
+            time.sleep(20)
+            
         message_dict.update({idx: get_more_detail_from_chat(message_container)})
         print(f'No{idx} message processed!')
     Path(save_path).write_text(json.dumps(message_dict, indent=4))

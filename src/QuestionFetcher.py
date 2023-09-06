@@ -42,9 +42,4 @@ class Fetcher:
         self.preprocess_csv_data()
         formated_data_ = self.get_csv_by_range("formated_content" , self.range_)
         yield from iter(chain(self.extra_info, formated_data_))
-
-
-if __name__ == "__main__":
-    fetcher_iter_ = Fetcher("dataset/question_set.xlsx")
-    print(list(fetcher_iter_.run()))
-    
+ 

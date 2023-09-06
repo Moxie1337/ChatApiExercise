@@ -41,10 +41,4 @@ class Generator:
             self.message_[1] = ChatMessage(self.role, content_message_)()
             yield self.message_
 
-if __name__ == "__main__":
-    fetcher_iter_ = Fetcher("dataset/question_set.xlsx")
-    fetch_i = fetcher_iter_.run()
-    gene = Generator(fetch_i).run()
-    mess_ = next(gene)
-    ChatMessage(mess_)
     

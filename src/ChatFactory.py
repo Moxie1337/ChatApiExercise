@@ -1,7 +1,8 @@
 import openai
+import json
 
 from pathlib import Path
-import json
+from src.BackoffWrapper import retry_with_exponential_backoff
 
 class ChatFactory:
     def __init__(self, openai_conf_path, messages, model = "gpt-3.5-turbo"):
@@ -20,6 +21,7 @@ class ChatFactory:
         openai.api_base = self.api_base_
         openai.api_key = self.api_key_
 
+    @retry_with_exponential_backoff
     def create_chat(self):
         self.completion = openai.ChatCompletion.create(
             model=self.model_,

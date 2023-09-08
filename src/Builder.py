@@ -1,5 +1,5 @@
 import time
-import json
+import logging
 from pathlib import Path
 from typing import List
 from collections import OrderedDict
@@ -9,23 +9,31 @@ from openai.error import RateLimitError
 from src.QuestionFetcher import Fetcher
 from src.Generator import Generator
 from src.ChatFactory import ChatFactory
+from src.IoProcess import CsvIOProcess
+from src.LoggingConfig import setup_logger
 
+setup_logger()
+chat_log = logging.getLogger("ChatLog")
+
+import ipdb
 class Builder:
     def __init__(self, *args, **kwargs):
         self.args_ = args[0]
         self.kwargs_ = kwargs
         
         self.message_path = self.args_.message_path
-        self.save_path = self.args_.save_path
         self.repeat_nums = self.args_.repeat_nums
         self.range_ = tuple(self.args_.range)
+
         self.message_dict = OrderedDict()
 
     def get_more_detail_from_chat(self, messages : List):
         longest_message = max(messages, key=len)
         return longest_message
 
-    def run(self):
+    def run(self) -> bool:
+        
+        chat_log.info(f'process message from [{self.range_[0]}, {self.range_[1]}).')
 
         message_fetcher = Fetcher(self.message_path, range_=self.range_).run()
         message_generator = Generator(message_fetcher).run()
@@ -36,18 +44,22 @@ class Builder:
 
             # every query repeat `repeat_nums` times to get more detaile ans from chat
             for _ in range(self.repeat_nums):
-                chat_handle.create_chat()
+                try:
+                    chat_handle.create_chat()
+                except Exception as e:
+                    chat_log.error(f'{e},\nmessage from [{self.range_[0]}, {self.range_[0] + idx}) has beed processed \
+                        \nplease restart this programme from --range [{self.range_[0] + idx},{self.range_[1]}).')
+                    CsvIOProcess(self.args_, io_ops="output", message_dict=self.message_dict).run()
+                    return False
+                
                 time.sleep(1)
                 message_container.append(chat_handle.get_chat_info())
   
-            self.message_dict.update({idx + self.range_[0] : self.get_more_detail_from_chat(message_container)})
-            print(f'No {idx + self.range_[0]} message processed!')
+            self.message_dict.update({str(idx + self.range_[0]) : self.get_more_detail_from_chat(message_container)})
+            # logging
+            chat_log.info(f'No {idx + self.range_[0]} message has been processed!')
 
-        save_file_handle = Path(self.save_path)
-        message_write = json.dumps(self.message_dict, indent=4, ensure_ascii=False)
+        CsvIOProcess(self.args_, io_ops="output", message_dict=self.message_dict).run()
+        chat_log.info(f'all message has been processed! from idx [{self.range_[0]},{self.range_[1]})')
 
-        if save_file_handle.is_file() and save_file_handle.exists():
-            save_file_handle = save_file_handle.open(mode="+a")
-            save_file_handle.write(message_write)
-        else:
-            save_file_handle.write_text(json.dumps(message_write))
+        return True

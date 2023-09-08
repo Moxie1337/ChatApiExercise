@@ -15,9 +15,9 @@ class ChatFactory:
         self.messages_ = messages
         self.completion = None
 
-        self.construct_openai_donf()
+        self.construct_openai_conf()
 
-    def construct_openai_donf(self):
+    def construct_openai_conf(self):
         openai.api_base = self.api_base_
         openai.api_key = self.api_key_
 

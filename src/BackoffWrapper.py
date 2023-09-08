@@ -49,3 +49,22 @@ def retry_with_exponential_backoff(
                 raise e
 
     return wrapper
+
+"""Example of wrapper handling exceptions"""
+# def valid_zero_divi(func, 
+#                     max_retries: int = 10,
+#                     errors: tuple = (ZeroDivisionError)):
+#         def wrapper(*args, **kwargs):
+#             num_retries = 0
+#             while True:
+#                  try:
+#                      return func(*args, **kwargs)
+#                  except errors as e:
+#                     num_retries += 1
+#                     if num_retries > max_retries:
+#                         raise Exception(
+#                             f"Maximum number of retries ({max_retries}) exceeded."
+#                         )
+#                  except Exception as e:
+#                      raise e
+#         return wrapper
